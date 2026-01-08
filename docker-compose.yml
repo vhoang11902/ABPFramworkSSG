@@ -1,0 +1,40 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: abp-sql
+    environment:
+      SA_PASSWORD: "SSG@2026$"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+
+  backend:
+    container_name: abp-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - sqlserver
+    ports:
+      - "44359:80"
+    environment:
+      ConnectionStrings__Default: "Server=sqlserver,1433;Database=AbpDb;User Id=sa;Password=SSG@2026$;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
+      ASPNETCORE_ENVIRONMENT: Development
+
+      App__SelfUrl: "http://localhost:80"
+      App__HealthCheckUrl: "http://localhost:80/health-status"
+      App__AngularUrl: "http://localhost:4200"
+      App__CorsOrigins: "http://localhost:4200,http://localhost:4201,http://localhost:44359"
+      App__RedirectAllowedUrls: "http://localhost:4200"
+      App__DisablePII: "false"
+
+      AuthServer__Authority: "http://localhost:44359"
+      AuthServer__RequireHttpsMetadata: "false"
+      AuthServer__SwaggerClientId: "AbpSolution2_Swagger"
+
+      StringEncryption__DefaultPassPhrase: "iIEdAm6STYFMHdoL"
+
+volumes:
+  sqlserver-data:
